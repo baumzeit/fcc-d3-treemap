@@ -1,0 +1,250 @@
+html, body {
+  margin: 0;
+}
+body {
+  height: 100vh;
+  background: #1D1E22;
+}
+
+.site-container {
+  height: 100vh;
+  display: grid;
+  grid-template-rows: 120px 1fr auto;
+  grid-template-columns: 1fr;
+}
+
+header {
+   display: flex;
+   align-items: center;
+   justify-content: flex-end;
+}
+
+#title {
+  position: absolute;
+  top: -66px;
+  left: -16px;
+  color: olive;
+  font-family: 'Muli', sans-serif;
+  font-weight: bold;
+  font-size: 12em;
+  margin: 0;
+  transition: color 1s ease;
+  z-index: -10;
+}
+
+#description {
+  color: #ccc;
+  height: 320px;
+  padding: 0px 20px;
+  margin-top: 50px;
+  text-align: right;
+  font-family: Quicksand, sans-serif;
+  font-size: 1.2em;
+  line-height: 1.4;
+  writing-mode: vertical-rl; 
+  text-orientation: sideways;
+  transform: rotate(180deg);
+  transform-origin: center;
+  cursor: default;
+}
+
+#menu {
+  display: grid;
+  position: sticky;
+  right: 0;
+  grid-template-rows: 1fr;
+  grid-template-columns: auto 130px; 
+  grid-gap: 12px;
+  align-items: center;
+  border-radius: 5px;
+  background: rgba(29, 30, 34, 0.85);
+  margin: 6px 40px 6px 0;
+  padding: 4px 10px;
+}
+
+.grid-col {
+  display: grid;
+  grid-template-rows: 1fr 1fr 1fr;
+  align-items: center;
+}
+
+.controls {
+  font-family: 'Muli', sans-serif;
+  font-size: 0.7em;
+  height: 100%;
+  text-align: center;
+  color: #555;  
+}
+.controls .arrow {
+  font-size: 1.1em;
+  opacity: 0.5;
+  transform: scale(1,1.9);
+}
+.controls div,
+.labels label {
+  cursor: pointer;
+}
+
+.labels {
+  font-family: 'Open Sans', sans-serif;
+  height: 100%;
+}
+
+#highlight {
+  font-size: 1.15em;
+  /*font-weight: bold;*/
+  background: #dedede;
+  border-radius: 25px;
+  box-shadow: 1px 1px 18px -1px black,
+              inset 0px 0px 1px black;
+  padding: 0px 0px 2px 12px;
+  margin: 3px;
+  margin-left: 8px;
+}
+
+#content {
+  box-sizing: border-box;
+  display: grid;
+  grid-template-rows: 1fr auto;
+  grid-template-columns: auto 1fr;
+  margin-right: 50px;
+  margin-bottom: 10px;
+}
+
+#map-container {
+  min-height: 320px;
+  min-width: 800px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background: rgba(245,245,245, 0.45);
+  border-radius: 5px;
+  box-shadow: 1px 1px 16px -1px black;
+  shape-rendering: crispEdges;
+}
+
+#legend-container {
+  height: 140px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin-top: 20px;
+  grid-column: 2 / 3;
+  border-radius: 5px;
+}
+
+.legend-label {
+  font: 0.75em sans-serif;
+  opacity: 0.7;
+  
+}
+
+.animate-in {
+  animation: blur-in 220ms ease-out forwards;
+}
+.animate-out {
+  animation: blur-out 220ms ease-in;
+}
+
+@keyframes blur-in {
+  from { filter: blur(0) }
+  to   { filter: blur(40px) }
+}
+@keyframes blur-out {
+  from { filter: blur(40px) }
+  to   { filter: blur(0) }
+}
+
+/* @keyframes hue-in {
+  from { filter: hue-rotate(180deg) }
+  to   { filter: hue-rotate(270deg) }
+}
+@keyframes hue-out {
+  from { filter: hue-rotate(270deg) }
+  to { filter: hue-rotate(0deg) }
+}
+
+@keyframes flash-in {
+  to   { background-color: rgba(255,255,255, 0.5) }
+}
+@keyframes flash-out {
+  from { background-color: rgba(200,255,255, 0.5) }
+}
+
+@keyframes flip-in {
+  from { transform: perspective(50em) rotateX(0deg) }
+  to   { transform: perspective(50em) rotateX(90deg) }
+}
+@keyframes flip-out {
+  from { transform: perspective(50em) rotateX(270deg) }
+  to   { transform: perspective(50em) rotateX(360deg) }
+} */
+
+.category {
+  transition: stroke 120ms ease;
+}
+
+.tile {
+  transition: stroke 120ms ease;
+}
+
+.tile-label {
+  font: 9px sans-serif;
+  fill: rgba(245,245,245,0.5);
+  pointer-events: none;
+}
+
+.hidden {
+  visibility: hidden;
+}
+
+#tooltip {
+  position: absolute;
+  width: 170px;
+  padding: 5px 10px;
+  font-family: "open sans", sans-serif;
+  font-size: 0.8em;
+  background: rgba(255,255,255,0.9);
+  border-radius: 3px;
+  box-shadow: 1px 1px 14px -2px black,
+              inset 0px 0px 1px black;
+  pointer-events: none;
+  line-height: 1.4;
+/*   transition: opacity 250ms ease-out; */
+}
+table {
+  width: 100%;
+}
+#tooltip-title {
+  text-align: left;
+  height: 36px;
+  font-weight: bold;
+  padding-left: 4px;
+}
+#tooltip-value {
+  font-size: 1.25em;
+}
+table td {
+  text-align: right;
+  font-weight: bold;
+}
+table th {
+  text-align: left;
+  font-weight: normal;
+  white-space: nowrap;
+}
+
+
+footer {
+  justify-self: end;
+  opacity: 0.8;
+  color: teal;
+  font-family: verdana, sans-serif;
+  font-size: 0.6em;
+  padding: 2px 16px 6px 0;
+  border-radius: 6px 0 0 0;
+}
+
+a {
+  color: white;
+}

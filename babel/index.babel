@@ -1,0 +1,389 @@
+"use strict";
+
+document.addEventListener("DOMContentLoaded", event => {
+  const labels = document.getElementsByClassName("labels")[0].children;
+  const controls = document.getElementsByClassName("controls")[0].children;
+  const heading = document.getElementById("title");
+  const descriptionBox = document.getElementById("description");
+  const containerMap = document.getElementById("map-container");
+  const containerLegend = document.getElementById("legend-container");
+
+  let titles = ["Games", "Movies", "Kickstarter"];
+  // `titles` need to correspond with `metaData` keys
+  const metaData = {
+    Games: {
+      url:
+        "https://cdn.rawgit.com/freeCodeCamp/testable-projects-fcc/a80ce8f9/src/data/tree_map/video-game-sales-data.json",
+      description: "Top 100 Most Sold Video Games Grouped by Platform",
+      color: "#CD5700",
+      unitName: "Sold Copies",
+      unitSize: "million units",
+      valueScale: 1
+    },
+    Movies: {
+      url:
+        "https://cdn.rawgit.com/freeCodeCamp/testable-projects-fcc/a80ce8f9/src/data/tree_map/movie-data.json",
+      description: "Top 100 Highest Grossing Movies Grouped By Genre",
+      color: "SlateBlue",
+      unitName: "Gross USA",
+      unitSize: "million $",
+      valueScale: 0.000001
+    },
+    Kickstarter: {
+      url:
+        "https://cdn.rawgit.com/freeCodeCamp/testable-projects-fcc/a80ce8f9/src/data/tree_map/kickstarter-funding-data.json",
+      description:
+        "Top 100 Most Pledged Kickstarter Campaigns Grouped By Category",
+      color: "#009E74",
+      unitName: "Pledges",
+      unitSize: "million $",
+      valueScale: 0.000001
+    }
+  };
+
+  // event listeners for dataset navigation
+  for (let i = 0; i < titles.length; i++) {
+    labels[i].addEventListener("click", handleClick);
+    controls[i].addEventListener("click", handleClick);
+  }
+  window.onkeydown = handleKey;
+
+  const timeoutDelay = 220; // needs to be the same
+  // as the duration of the animation
+
+  function handleClick(e) {
+    const row = e.target.dataset.row;
+    const clicked = titles[row];
+    let found = document.getElementById("highlight").innerText;
+    while (clicked != found) {
+      found = rotateArr(titles);
+    }
+    diagramAnimationWrapper(renderPage);
+  }
+
+  function handleKey(e) {
+    if (e.keyCode == "38") {
+      // up key
+      rotateArr(titles);
+      diagramAnimationWrapper(renderPage);
+    }
+    if (e.keyCode == "40") {
+      // down key
+      rotateArr(titles, true);
+      diagramAnimationWrapper(renderPage);
+    }
+  }
+
+// manages animation sequence
+// update diagram in between in and out animations for a smoother transition between two datasets
+// << in | update | out >>
+  function diagramAnimationWrapper(func) {
+    // necessary to enable animation restart
+    containerMap.classList.remove("animate-in");
+    containerMap.classList.remove("animate-out");
+    void containerMap.offsetWidth;
+    
+    containerMap.classList.add("animate-in");
+    setTimeout(() => {
+      containerMap.classList.add("animate-out");
+      func();
+    }, timeoutDelay);
+  }
+
+  function rotateArr(arr, reverse) {
+    if (reverse) {
+      titles.push(titles.shift());
+    } else {
+      titles.unshift(titles.pop());
+    }
+    return titles[1];
+  }
+
+  // check if local storage is supported
+  const webStorage = typeof Storage !== "undefined";
+
+  function preloadData() {
+    titles.map(title => {
+      d3.json(metaData[title].url).then(data => {
+        sessionStorage[title] = JSON.stringify(data);
+      });
+    });
+  }
+  
+  // preload all data sets if webStorage is supported
+  // fetch each data set only once per session
+  webStorage && preloadData();
+
+  renderPage();
+
+  function renderPage() {
+    // store the the title of the user selected dataset
+    const selected = titles[1];
+
+    updateTitles();
+    updateheading();
+    updateDescription();
+
+    const stored = () => sessionStorage.hasOwnProperty(selected);
+    const retrieve = () => JSON.parse(sessionStorage.getItem(selected));
+
+    // make use of of local storage if supported
+    if (stored()) {
+      drawDiagram(retrieve());
+    } else {
+      d3.json(metaData[selected].url).then(data => drawDiagram(data));
+    }
+  }
+
+  function updateTitles() {
+    let label;
+    for (let i = 0; i < labels.length; i++) {
+      label = labels[i];
+      label.innerText = titles[i];
+      label.style.color = metaData[titles[i]].color;
+    }
+  }
+
+  function updateheading() {
+    heading.innerText = document.getElementById("highlight").innerText; // sets the title to the selected dataset name
+    heading.style.color = metaData[titles[1]].color;
+  }
+
+  function updateDescription() {
+    descriptionBox.innerText = metaData[titles[1]].description;
+  }
+
+  function drawDiagram(data) {
+    // map svg sizing
+    d3.selectAll("svg").remove();
+    d3.selectAll("#tooltip").remove();
+
+    const containerMapD3 = d3.select("#map-container");
+    const w = containerMap.offsetWidth - 4;
+    const hMap = containerMap.offsetHeight - 4;
+    const paddingInner = 2;
+    const paddingOuter = 2;
+
+    // create main svg
+    const svgMap = containerMapD3
+      .append("svg")
+      .attr("width", w)
+      .attr("height", hMap);
+
+    // create tooltip element
+    const tooltip = d3
+      .select("body")
+      .append("div")
+      .attr("id", "tooltip")
+      .style("opacity", 0)
+      .style("top", "50vh")
+      .style("right", "50vw");
+
+    const root = d3
+      .hierarchy(data)
+      .sum(d => d.value)
+      .sort((a, b) => b.value - a.value);
+
+    const treemap = d3
+      .treemap()
+      .size([w, hMap])
+      .paddingInner([paddingInner])
+      .paddingOuter([paddingOuter])
+      .tile(d3.treemapSquarify.ratio(1.3));
+    treemap(root);
+
+    // dynamically create color set for the number of categories in the dataset
+    const categories = root.children.map(cat => cat.data.name);
+    const norm = d3.scaleBand().domain(categories);
+
+    const color = cat => d3.interpolateViridis(norm(cat));
+
+    const category = svgMap
+      .selectAll("rect")
+      .data(root.children)
+      .enter()
+      .append("rect")
+      .attr("class", "category")
+      .attr("id", d => toCatId(d.data.name))
+      .attr("x", d => d.x0)
+      .attr("y", d => d.y0)
+      .attr("width", d => d.x1 - d.x0)
+      .attr("height", d => d.y1 - d.y0)
+      .attr("fill", "transparent");
+
+    function toCatId(str) {
+      return "cat-" + str.toLowerCase().replace(/\W/g, "_");
+    }
+
+    const cell = svgMap
+      .selectAll("g")
+      .data(root.leaves())
+      .enter()
+      .append("g")
+      .attr("transform", d => "translate(" + d.x0 + "," + d.y0 + ")");
+
+    cell
+      .append("rect")
+      .attr("class", "tile")
+      .attr("width", d => d.x1 - d.x0)
+      .attr("height", d => d.y1 - d.y0)
+      .attr("fill", d => color(d.data.category))
+      .attr("data-name", d => d.data.name)
+      .attr("data-category", d => d.data.category)
+      .attr("data-value", d => d.data.value)
+
+      //  add event listeners
+      .on("mousemove", d => {
+        tooltip.style("opacity", 1).attr("data-value", d.data.value);
+        d3.event.target.style.stroke = "white";
+        const getTooltipLeftOffset = () => {
+          const posX = d3.event.pageX;
+          const screenWidth = window.innerWidth;
+          return posX < screenWidth - 260
+            ? posX + 40 + "px"
+            : posX - 210 + "px";
+        };
+
+        tooltip
+          .html(formatDataHTML(d))
+          .style("top", d3.event.pageY - 90 + "px")
+          .style("left", getTooltipLeftOffset());
+
+        document.getElementById("tooltip-title").style.color =
+          metaData[titles[1]].color;
+      })
+      .on("mouseout", d => {
+        tooltip.style("opacity", 0);
+        d3.event.target.style.stroke = "transparent";
+      });
+
+    cell.each(addText);
+
+    function addText(rect, i) {
+      const width = d3
+          .select(this)
+          .select("rect")
+          .attr("width"),
+        height = d3
+          .select(this)
+          .select("rect")
+          .attr("height"),
+        text = d3.select(this).append("text"),
+        x = 4,
+        y = 10;
+      let word,
+        words = rect.data.name.split(/\s+/).reverse(),
+        line = [],
+        lineHeight = 10,
+        lineNumber = 0,
+        full = false,
+        maxLines = Math.floor((height - y) / lineHeight),
+        tspan = text
+          .text(null)
+          .attr("y", y)
+          .attr("x", x)
+          .attr("class", "tile-label")
+          .append("tspan");
+      while ((word = words.pop())) {
+        line.push(word);
+        tspan.text(line.join(" "));
+        if (
+          !full &&
+          line.length > 1 &&
+          tspan.node().getComputedTextLength() > parseFloat(width) - 4
+        ) {
+          line.pop();
+          tspan.text(line.join(" "));
+          line = [word];
+          lineNumber++;
+          tspan = text
+            .append("tspan")
+            .attr("x", x)
+            .attr("dy", lineHeight)
+            .text(word);
+          if (lineNumber == maxLines) {
+            words = ["..."];
+            full = true;
+          }
+        }
+      }
+    }
+
+    // create HTML for the tooltip
+    function formatDataHTML(d) {
+      const f2 = d3.format(".2f");
+      const scaledValue = f2(d.data.value * metaData[titles[1]].valueScale);
+      return `<table>
+              <tr>
+                <td id="tooltip-title" colspan="2">${d.data.name}</td>
+              </tr>
+              <tr>
+                <th>Category: </th><td>${d.data.category}</td>
+              </tr>
+              <tr>
+                <th>${metaData[titles[1]].unitName}:<br>
+                    (${metaData[titles[1]].unitSize})</th>
+                <td id="tooltip-value" rowspan="2">${scaledValue}</td>
+              </tr>
+            </table>`;
+    }
+
+    // create svg for legend
+    const containerLegendD3 = d3.select("#legend-container");
+    containerLegend.style.height = 100;
+    const hLegend = containerLegend.offsetHeight;
+    const twoRows = categories.length > 10;
+    const numCatRow = Math.ceil(categories.length / (twoRows ? 2 : 1));
+    const xInterval = w / numCatRow;
+    const side = 25;
+
+    const svgLegend = containerLegendD3
+      .append("svg")
+      .attr("id", "legend")
+      .attr("width", w)
+      .attr("height", hLegend);
+
+    const legendEntry = svgLegend
+      .selectAll("g")
+      .data(categories)
+      .enter()
+      .append("g")
+      .attr("transform", (d, i) => `translate(${calcX(d, i)}, ${calcY(d, i)})`);
+
+    legendEntry
+      .append("rect")
+      .attr("class", "legend-item")
+      .attr("fill", d => color(d))
+      .attr("x", 0)
+      .attr("y", 0)
+      .attr("width", side)
+      .attr("height", side)
+      .on("mouseover", d => {
+        const id = toCatId(d);
+        d3
+          .select(`#${id}`)
+          .attr("stroke", "white")
+          .attr("stroke-width", 2);
+      })
+      .on("mouseout", d => {
+        const id = toCatId(d);
+        d3.select(`#${id}`).attr("stroke", "transparent");
+      });
+
+    legendEntry
+      .append("text")
+      .attr("class", "legend-label")
+      .attr("x", side / 2)
+      .attr("y", side + 18)
+      .text(d => d)
+      .attr("fill", "white")
+      .attr("text-anchor", "middle");
+
+    function calcX(d, i) {
+      return xInterval * (i % numCatRow) + xInterval / 2 - side / 2;
+    }
+    function calcY(d, i) {
+      return twoRows ? (i >= numCatRow ? side + 55 : 15) : 50;
+    }
+  }
+});

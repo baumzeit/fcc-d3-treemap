@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="en" >
+
+<head>
+  <meta charset="UTF-8">
+  <title>D3 Treemap Diagram</title>
+  
+  
+  
+      <link rel="stylesheet" href="css/style.css">
+
+  
+</head>
+
+<body>
+
+  <link href="https://fonts.googleapis.com/css?family=Open+Sans|Quicksand|Muli" rel="stylesheet">
+
+<div class="site-container">
+  
+  <header>
+    <h1 id="title"></h1>
+    <div id="menu">
+      <div class="controls grid-col">
+        <div class="arrow" data-row="0">▲</div>
+        <div class="hint" data-row="1">view</div>
+        <div class="arrow" data-row="2">▼</div>
+      </div>
+      <div class="labels grid-col">
+        <label data-row="0"></label>
+        <label data-row="1" id="highlight"></label>
+        <label data-row="2"></label>
+      </div>
+    </div>
+  </header>
+
+  <main id="content">
+    <aside id="description"></aside>
+    <div id="map-container"></div>
+    <div id="legend-container"></div>
+  </main>
+
+  <footer>
+    created by <a href="https://github.com/baumzeit/" target="_blank" rel="noopener noreferrer">Baumzeit</a>
+  </footer>
+</div>
+  <script src='https://cdn.freecodecamp.org/testable-projects-fcc/v1/bundle.js'></script>
+<script src='https://cdnjs.cloudflare.com/ajax/libs/d3/5.7.0/d3.min.js'></script>
+<script src='https://d3plus.org/js/d3plus-text.v0.9.full.min.js'></script>
+
+  
+
+    <script  src="js/index.js"></script>
+
+
+
+
+</body>
+
+</html>
